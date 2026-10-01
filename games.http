@@ -1,0 +1,39 @@
+GET http://localhost:5287/games/2
+
+
+###
+GET http://localhost:5287/games
+
+
+### 
+GET http://localhost:5287
+
+
+###
+
+POST http://localhost:5287/games
+Content-Type: application/json
+
+{
+    "Name": "Game 4",
+    "Genre": "Genre 4", 
+    "Price": 49.9,
+    "releaseDate": "2026-09-29"
+}
+
+
+###
+
+PUT  http://localhost:5287/games/4
+Content-Type: application/json
+
+{
+    "Name": "Game 4",
+    "Genre": "Genre 4", 
+    "Price": 50.9,
+    "releaseDate": "2026-09-29"
+}
+
+
+### 
+DELETE http://localhost:5287/games/4

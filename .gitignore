@@ -1,0 +1,42 @@
+# Build output
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+[Ll]og/
+[Ll]ogs/
+
+# SQLite database (regenerated from migrations)
+*.db
+*.db-shm
+*.db-wal
+
+# Local secrets and environment files
+appsettings.*.local.json
+secrets.json
+*.env
+.env*
+
+# VS Code local history extension
+.history/
+
+# Editor / IDE
+.vscode/
+.vs/
+.idea/
+*.user
+*.suo
+*.swp
+
+# Test results and coverage
+[Tt]est[Rr]esults/
+coverage/
+*.coverage
+*.trx
+
+# NuGet
+*.nupkg
+packages/
+
+# macOS
+.DS_Store
