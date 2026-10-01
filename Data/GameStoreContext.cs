@@ -14,5 +14,11 @@ public class GameStoreContext(DbContextOptions<GameStoreContext> options): DbCon
         modelBuilder.Entity<Game>()
             .HasIndex(g => g.Name)
             .IsUnique();
+
+        modelBuilder.Entity<Genre>()
+            .HasIndex(g => g.Name)
+            .IsUnique();
     }
+
+    
 }
