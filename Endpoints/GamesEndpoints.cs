@@ -1,34 +1,45 @@
 using GameStore.Api.Data;
 using GameStore.Api.Dtos;
 using GameStore.Api.models;
+using Microsoft.EntityFrameworkCore;
 
 namespace GameStore.Api.Endpoints;
-
-
 
 
 public static class GamesEndpoints
 {
     const string GetGameEndpointName = "GetGame";
     const string Error = "Game not found";
- 
-    private static readonly List<GameDto> games = [
-        new (1, "Game 1", "Genre 1", 19.99m, DateOnly.FromDateTime(DateTime.Now)),
-        new (2, "Game 2", "Genre 2", 29.99m, DateOnly.FromDateTime(DateTime.Now)),
-        new (3, "Game 3", "Genre 3", 39.9m, DateOnly.FromDateTime(DateTime.Now))
-    ];
+
     public static void MapGamesEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/games");
-        group.MapGet("/", () => games);
-        group.MapGet("/{id}", (int id) =>
+        group.MapGet("/", async (GameStoreContext dbContext) => await dbContext.Games.Select(
+            game => new GameSummaryDto(
+                game.Id,
+                game.Name,
+                game.Genre!.Name,
+                game.Price,
+                game.ReleaseDate
+
+            )
+        ).AsNoTracking().ToListAsync()
+        );
+
+
+        group.MapGet("/{id}", async (int id, GameStoreContext dbContext) =>
         {
-            var game = games.Find(g => g.Id == id);
-            return game is null ? Results.BadRequest(Error) : Results.Ok(game);
+            var game = await dbContext.Games.FindAsync(id);
+            return game is null ? Results.BadRequest(Error) : Results.Ok(new GameDetailsDto(game.Id, game.Name, game.GenreId, game.Price, game.ReleaseDate));
         }).WithName(GetGameEndpointName);
 
-        group.MapPost("/", (CreateGameDto newGame, GameStoreContext DbContext) =>
+        group.MapPost("/", async (CreateGameDto newGame, GameStoreContext DbContext) =>
         {
+
+            if (await DbContext.Games.AnyAsync(g => g.Name == newGame.Name))
+            {
+                return Results.Conflict("Game already exists");
+            }
 
             Game game = new()
             {
@@ -58,39 +69,43 @@ public static class GamesEndpoints
             //     return Results.BadRequest("Game already exist");
             // }
             DbContext.Games.Add(game);
-            DbContext.SaveChanges();
-            
+            await DbContext.SaveChangesAsync();
+
             GameDetailsDto gameDto = new(
-                game.Id, game.Name, game.GenreId,game.Price, game.ReleaseDate
+                game.Id, game.Name, game.GenreId, game.Price, game.ReleaseDate
             );
             return Results.CreatedAtRoute(GetGameEndpointName, new { id = gameDto.Id }, gameDto);
 
         });
 
 
-        group.MapPut("/{id}", (int id, UpdateGameDto updateGame) =>
+        group.MapPut("/{id}", async (int id, UpdateGameDto updateGame, GameStoreContext dbContext) =>
         {
-            var index = games.FindIndex(game => game.Id == id);
-            if (index < 0)
+            var existingGame = await dbContext.Games.FindAsync(id);
+
+
+            if (existingGame is null)
             {
                 return Results.BadRequest(Error);
             }
-            games[index] = new GameDto(id, updateGame.Name, updateGame.Genre, updateGame.Price, DateOnly.FromDateTime(updateGame.ReleaseDate));
+
+            existingGame.Name = updateGame.Name;
+            existingGame.Price = updateGame.Price;
+            existingGame.GenreId = updateGame.GenreId;
+            existingGame.ReleaseDate = updateGame.ReleaseDate;
+            await dbContext.SaveChangesAsync();
+
             return Results.NoContent();
         });
 
 
-        group.MapDelete("/{id}", (int id) =>
+        group.MapDelete("/{id}", async (int id, GameStoreContext dbContext) =>
         {
-            var game = games.Find(game => game.Id == id);
-            Console.WriteLine(games);
+            var deleted = await dbContext.Games
+                .Where(game => game.Id == id)
+                .ExecuteDeleteAsync();
 
-            if (game is null)
-            {
-                return Results.BadRequest(Error);
-            } 
-            games.Remove(game);
-            return  Results.NoContent();
+            return deleted == 0 ? Results.NotFound(Error) : Results.NoContent();
         });
 
     }

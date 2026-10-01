@@ -8,4 +8,11 @@ public class GameStoreContext(DbContextOptions<GameStoreContext> options): DbCon
     public DbSet<Game> Games => Set<Game>();
 
     public DbSet<Genre> Genre => Set<Genre>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Game>()
+            .HasIndex(g => g.Name)
+            .IsUnique();
+    }
 }

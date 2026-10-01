@@ -15,8 +15,8 @@ POST http://localhost:5287/games
 Content-Type: application/json
 
 {
-    "Name": "Game 4",
-    "Genre": "Genre 4", 
+    "Name": "Game 5",
+    "GenreId": "5", 
     "Price": 49.9,
     "releaseDate": "2026-09-29"
 }
@@ -24,16 +24,16 @@ Content-Type: application/json
 
 ###
 
-PUT  http://localhost:5287/games/4
+PUT  http://localhost:5287/games/1
 Content-Type: application/json
 
 {
-    "Name": "Game 4",
-    "Genre": "Genre 4", 
-    "Price": 50.9,
+    "Name": "Game 2",
+    "GenreId": "2", 
+    "Price": 20.9,
     "releaseDate": "2026-09-29"
 }
 
 
 ### 
-DELETE http://localhost:5287/games/4
+DELETE http://localhost:5287/games/3
