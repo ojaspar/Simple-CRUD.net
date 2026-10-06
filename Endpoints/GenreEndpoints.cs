@@ -1,8 +1,5 @@
-using System;
-using GameStore.Api.Data;
 using GameStore.Api.Dtos.genre;
-using GameStore.Api.models;
-using Microsoft.EntityFrameworkCore;
+using GameStore.Api.Services;
 
 namespace GameStore.Api.Endpoints;
 
@@ -16,67 +13,49 @@ public static class GenreEndpoints
     public static void MapGenreEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/genres");
-        group.MapGet("/", async(GameStoreContext dbContext) => await dbContext.Genre.Select(
-            genre => new GenreSummaryDto(
-                genre.Id, genre.Name
-            )
-        ).AsNoTracking().ToListAsync()
-        );
+        group.MapGet("/", async(IGenreService service) => await service.GetAllASync());
 
-        group.MapGet("/{id}", async(int id, GameStoreContext DbContext)  =>
+
+        group.MapGet("/{id}", async(int id, IGenreService service)  =>
         {
-            var genre = await DbContext.Genre.FindAsync(id);
+            var genre = await service.GetByIdAsync(id);
             return genre is null ? Results.BadRequest(Error) : Results.Ok(new GenreDetailsDto(genre.Id, genre.Name, genre.DateCreated, genre.DateUpdated));
         }).WithName(GetGenreEndpointName);
 
 
-        group.MapPost("/", async(CreateGenreDto newGenre, GameStoreContext DbContext) =>
+        group.MapPost("/", async(CreateGenreDto newGenre, IGenreService service) =>
         {
-            if(await DbContext.Genre.AnyAsync(g => g.Name == newGenre.Name))
+            var createdGenre = await service.CreateAsync(newGenre);
+
+            if (createdGenre is null)
             {
                 return Results.Conflict("Genre already exists");
             }
 
-            Genre genre = new()
-            {
-               Name = newGenre.Name,
-               DateCreated = DateTime.UtcNow, 
-               DateUpdated = DateTime.UtcNow
-            };
-
-            DbContext.Genre.Add(genre);
-            await DbContext.SaveChangesAsync();
-
-            GenreDetailsDto genreDetailsDto = new(genre.Id, genre.Name, genre.DateCreated, genre.DateUpdated);
-            return Results.CreatedAtRoute(GetGenreEndpointName, new { id = genre.Id }, genre);
+            return Results.CreatedAtRoute(GetGenreEndpointName, new { id = createdGenre.Id }, createdGenre);
 
 
         });
 
-        group.MapPut("/{id}", async(int id, UpdateGenreDto updatedGenre, GameStoreContext DbContext) =>
+        group.MapPut("/{id}", async(int id, UpdateGenreDto updatedGenre, IGenreService service) =>
         {
-            var existingGenre = await DbContext.Genre.FindAsync(id);
+            var existingGenre = await service.GetByIdAsync(id);
 
             if(existingGenre is null)
             {
                 return Results.NotFound(Error);
             }
 
-            existingGenre.Name = updatedGenre.Name;
-            existingGenre.DateUpdated =  DateTime.UtcNow;
 
-            await DbContext.SaveChangesAsync();
             return Results.Ok(new GenreDetailsDto(existingGenre.Id, existingGenre.Name, existingGenre.DateCreated, existingGenre.DateUpdated));
         });
 
 
-         group.MapDelete("/{id}", async (int id, GameStoreContext dbContext) =>
+         group.MapDelete("/{id}", async (int id, IGenreService service) =>
         {
-            var deleted = await dbContext.Genre
-                .Where(genre => genre.Id == id)
-                .ExecuteDeleteAsync();
+            var deleted = await service.DeleteAsync(id);
 
-            return deleted == 0 ? Results.NotFound(Error) : Results.NoContent();
+            return deleted ? Results.NotFound(Error) : Results.NoContent();
         });
 
 

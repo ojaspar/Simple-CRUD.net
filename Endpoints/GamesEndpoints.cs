@@ -49,25 +49,6 @@ public static class GamesEndpoints
                 ReleaseDate = newGame.ReleaseDate
 
             };
-            // if (string.IsNullOrEmpty(newGame.Name))
-            // {
-            //     return Results.BadRequest("Name is required");
-            // }
-            // if (string.IsNullOrEmpty(newGame.Genre))
-            // {
-            //     return Results.BadRequest("Genre is required");
-            // }
-
-            // if (decimal.IsNegative(newGame.Price))
-            // {
-            //     return Results.BadRequest("Enter a valid Price");
-            // }
-
-            // var validGame =  games.Find(g => g.Name == newGame.Name);
-            // if(validGame is not null)
-            // {
-            //     return Results.BadRequest("Game already exist");
-            // }
             DbContext.Games.Add(game);
             await DbContext.SaveChangesAsync();
 
