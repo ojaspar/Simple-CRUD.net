@@ -7,6 +7,7 @@ builder.Services.AddValidation();
 builder.AddGameStoreDb();
 
 builder.Services.AddScoped<IGenreService, GenreService>();
+builder.Services.AddScoped<IGameService, GameService>();
 
 var app = builder.Build();
 app.MapGamesEndpoints();
